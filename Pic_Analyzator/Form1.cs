@@ -16,21 +16,25 @@ namespace Pic_Analyzator
 {
     public partial class Form1 : Form
     {
-        Bitmap _bitmap;
-        List<Pixel> _pixel;
-        int _max = int.MinValue;
+        Bitmap _bitmap; // original picture
+        List<Pixel> _pixel; // pixels array from original picture
+        int _max = int.MinValue; // max brightness of all pixels
 
         public Form1()
         {
             InitializeComponent();
         }
 
+        // method to get the picture and not to occupy it
         public static Bitmap LoadBitmap(string fileName)
         {
             using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 return new Bitmap(fs);
         }
 
+
+        // UNSAFE METHOD
+        // add all pixels from _bitmap to array that includes ARGB values
         public unsafe static byte[,,] BitmapToByteRgb(Bitmap bmp)
         {
             int width = bmp.Width,
@@ -46,10 +50,10 @@ namespace Pic_Analyzator
                     curpos = ((byte*)bd.Scan0) + h * bd.Stride;
                     for (int w = 0; w < width; w++)
                     {
-                        res[3, h, w] = *(curpos++);
-                        res[2, h, w] = *(curpos++);
-                        res[1, h, w] = *(curpos++);
-                        res[0, h, w] = *(curpos++);
+                        res[3, h, w] = *(curpos++); // B
+                        res[2, h, w] = *(curpos++); // G
+                        res[1, h, w] = *(curpos++); // R
+                        res[0, h, w] = *(curpos++); // A
 
                     }
                 }
@@ -63,7 +67,7 @@ namespace Pic_Analyzator
 
         private async void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialog() == DialogResult.OK) // choose picture
             {
                 await Task.Run(new Action(() =>
                 {
@@ -72,16 +76,17 @@ namespace Pic_Analyzator
                 }));
                 _bitmap = LoadBitmap(openFileDialog1.FileName);
             }
-            else
+            else // cancel choosing
             {
                 return;
             }
 
-            PixelParse();
-            //await Task.Run(new Action(() => PixelParse()));
+            FillPixelsArray();
+            //await Task.Run(new Action(() => PixelParse())); // doesn't work cause it runs not in UI
             await Task.Run(new Action(() => PixelAnalysing()));
         }
 
+        // find pixels which brigthness more then 3/4 of max brigthness
         private void PixelAnalysing()
         {
             int startedMax = _max / 4 * 3;
@@ -97,7 +102,8 @@ namespace Pic_Analyzator
             pictureBox2.Image = newBitmap;
         }
 
-        private void PixelParse()
+        // method to add all picture pixels into _pixels array
+        private void FillPixelsArray()
         {
             _pixel = new List<Pixel>(_bitmap.Width * _bitmap.Height);
             var arr = BitmapToByteRgb(_bitmap);
@@ -113,7 +119,8 @@ namespace Pic_Analyzator
             }
             TextLog("PixelParse done");
         }
-
+        
+        // method to log caption
         private void TextLog(string text)
         {
             this.Invoke(new Action(() =>
