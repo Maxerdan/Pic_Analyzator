@@ -93,7 +93,7 @@ namespace Pic_Analyzator
                 if ((int)(pixel.color.GetBrightness() * 1000) > startedMax)
                     newBitmap.SetPixel(pixel.point.X, pixel.point.Y, pixel.color);
             }
-            TextLog("Analyzee done");
+            TextLog("Analyze done");
             pictureBox2.Image = newBitmap;
         }
 
