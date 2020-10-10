@@ -11,6 +11,7 @@ using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.IO;
 using System.Drawing.Imaging;
+using Toub.Sound.Midi;
 
 namespace Pic_Analyzator
 {
@@ -18,6 +19,7 @@ namespace Pic_Analyzator
     {
         Bitmap _bitmap; // original picture
         List<Pixel> _pixel; // pixels array from original picture
+        List<Pixel> _starPixel;
         int _max = int.MinValue; // max brightness of all pixels
 
         public Form1()
@@ -89,6 +91,7 @@ namespace Pic_Analyzator
         // find pixels which brigthness more then 3/4 of max brigthness
         private void PixelAnalysing()
         {
+            _starPixel = new List<Pixel>(_bitmap.Width * _bitmap.Height);
             int startedMax = _max / 4 * 3;
             Bitmap newBitmap = new Bitmap(_bitmap.Width, _bitmap.Height);
             var counter = 0;
@@ -96,7 +99,10 @@ namespace Pic_Analyzator
             {
                 counter++;
                 if ((int)(pixel.color.GetBrightness() * 1000) > startedMax)
+                {
                     newBitmap.SetPixel(pixel.point.X, pixel.point.Y, pixel.color);
+                    _starPixel.Add(new Pixel() { point = new Point(pixel.point.X, pixel.point.Y), color = pixel.color });
+                }
             }
             TextLog("Analyze done");
             pictureBox2.Image = newBitmap;
@@ -119,7 +125,7 @@ namespace Pic_Analyzator
             }
             TextLog("PixelParse done");
         }
-        
+
         // method to log caption
         private void TextLog(string text)
         {
@@ -127,6 +133,55 @@ namespace Pic_Analyzator
             {
                 this.Text = text;
             }));
+        }
+
+        private async void playSoundToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await Task.Run(new Action(() => PlayMusic()));
+        }
+
+        private void PlayMusic()
+        {
+            int W = _bitmap.Width;
+            int H = _bitmap.Height;
+            Color[,] arr = new Color[W, H];
+            foreach (var pixel in _starPixel)
+            {
+                arr[pixel.point.X, pixel.point.Y] = pixel.color;
+            }
+            // добавить количество октав как переменную извне + классификацию по нотам внутри октавы и
+            // ОБЯЗАТЕЛЬНО написать алгоритм определения звезд и составления списка со звездами
+
+            MidiPlayer.OpenMidi();
+            int oct = H / 7;
+            for (var w = 0; w < W; w++)
+            {
+                for (var h = 0; h < H; h++)
+                {
+                    if (arr[w, h].Name != "0")
+                    {
+                        int octave = 1;
+                        for (var i = 0; i < 7; i++)
+                        {
+                            if (h > oct * i && h <= oct * (i + 1))
+                            {
+                                octave = i + 1;
+                                break;
+                            }
+                        }
+
+                        PlaySound(100, $"C{octave}");
+                        Thread.Sleep(3000);
+
+                    }
+                }
+                        Thread.Sleep(100);
+            }
+        }
+
+        private void PlaySound(byte volume, string note)
+        {
+            MidiPlayer.Play(new NoteOn(0, 1, note, volume));
         }
     }
 }
