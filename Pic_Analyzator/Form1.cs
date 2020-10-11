@@ -68,6 +68,7 @@ namespace Pic_Analyzator
             return res;
         }
 
+        // menu OPEN button
         private async void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK) // choose picture
@@ -137,42 +138,42 @@ namespace Pic_Analyzator
             }));
         }
 
+        // menu PLAY SOUND button
         private async void playSoundToolStripMenuItem_Click(object sender, EventArgs e)
         {
             await Task.Run(new Action(() => PlayMusic()));
         }
 
+        // method to play music
         private void PlayMusic()
         {
-            int min = int.MaxValue;
+            int min = int.MaxValue; // min brightness level
             int W = _bitmap.Width;
             int H = _bitmap.Height;
-            Color[,] arr = new Color[W, H];
-            foreach (var pixel in _starPixel)
+            Color[,] arr = new Color[W, H]; // array contains analyzed pixel (star pixel)
+            foreach (var pixel in _starPixel) // method to fill array and find min
             {
                 arr[pixel.point.X, pixel.point.Y] = pixel.color;
                 if ((int)(pixel.color.GetBrightness() * 1000) < min)
                     min = (int)(pixel.color.GetBrightness() * 1000);
             }
-            // добавить количество октав как переменную извне + классификацию по нотам внутри октавы и
-            // ОБЯЗАТЕЛЬНО написать алгоритм определения звезд и составления списка со звездами
+            // добавить количество октав как переменную извне
 
             MidiPlayer.OpenMidi();
             bool starFlag = true;
-            int oct = (_max - min) / 6;
+            int oct = (_max - min) / 6; // 6 - max num of octaves
 
             for (var w = 0; w < W; w++)
             {
-
                 for (var h = 0; h < H; h++)
                 {
                     if (arr[w, h].Name != "0" && starFlag)
                     {
-                        var brightLevel = (int)(arr[w, h].GetBrightness() * 1000);
-                        int octave = 3;
+                        var brightLevel = (int)(arr[w, h].GetBrightness() * 1000); // get bright level form pixel
+                        int octave = 3; // stock octave
                         for (var i = 2; i < 6; i++)
                         {
-                            if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1))
+                            if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1)) // find octave num
                             {
                                 octave = i + 1;
                                 break;
@@ -180,7 +181,7 @@ namespace Pic_Analyzator
                         }
 
                         starFlag = false;
-                        int oct7 = oct / 7;
+                        int oct7 = oct / 7; // find button num in octave
                         var t = min + (oct * (octave - 1));
                         if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
                             PlaySound(100, $"C{octave}");
@@ -196,16 +197,16 @@ namespace Pic_Analyzator
                             PlaySound(100, $"A{octave}");
                         else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
                             PlaySound(100, $"B{octave}");
-                        this.Invoke(new Action(() =>
-                    {
-                        Thread.Sleep(trackBar1.Value);
-                    }));
+                        this.Invoke(new Action(() => // delay between piano button push
+                        {
+                            Thread.Sleep(trackBar1.Value);
+                        }));
 
                     }
                     if (arr[w, h].Name == "0")
                         starFlag = true;
                 }
-                Thread.Sleep(10);
+                Thread.Sleep(10); // delay between pixel column go
             }
         }
 
