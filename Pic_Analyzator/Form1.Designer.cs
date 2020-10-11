@@ -49,7 +49,6 @@
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.Filter = "Images|*.bmp;*.png;*.jpg";
             // 
             // menuStrip1

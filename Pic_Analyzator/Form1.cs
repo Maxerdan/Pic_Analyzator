@@ -158,6 +158,7 @@ namespace Pic_Analyzator
                     min = (int)(pixel.color.GetBrightness() * 1000);
             }
             // добавить количество октав как переменную извне
+            // добавить кнопку остановки
 
             MidiPlayer.OpenMidi();
             bool starFlag = true;
