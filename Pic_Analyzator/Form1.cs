@@ -22,6 +22,7 @@ namespace Pic_Analyzator
         Bitmap newBitmap;
         List<Pixel> _starPixel;
         int _max; // max brightness of all pixels
+        bool _stopPlay = false;
 
         public Form1()
         {
@@ -147,6 +148,7 @@ namespace Pic_Analyzator
         // method to play music
         private void PlayMusic()
         {
+            _stopPlay = false;
             int min = int.MaxValue; // min brightness level
             int W = _bitmap.Width;
             int H = _bitmap.Height;
@@ -158,7 +160,7 @@ namespace Pic_Analyzator
                     min = (int)(pixel.color.GetBrightness() * 1000);
             }
             // добавить количество октав как переменную извне
-            // добавить кнопку остановки
+            // разобраться с частотой нажатия клавиш чтобы не было грязной музыки
 
             MidiPlayer.OpenMidi();
             bool starFlag = true;
@@ -168,44 +170,46 @@ namespace Pic_Analyzator
             {
                 for (var h = 0; h < H; h++)
                 {
-                    if (arr[w, h].Name != "0" && starFlag)
+                    if (!_stopPlay)
                     {
-                        var brightLevel = (int)(arr[w, h].GetBrightness() * 1000); // get bright level form pixel
-                        int octave = 3; // stock octave
-                        for (var i = 2; i < 6; i++)
+                        if (arr[w, h].Name != "0" && starFlag)
                         {
-                            if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1)) // find octave num
+                            var brightLevel = (int)(arr[w, h].GetBrightness() * 1000); // get bright level form pixel
+                            int octave = 3; // stock octave
+                            for (var i = 2; i < 6; i++)
                             {
-                                octave = i + 1;
-                                break;
+                                if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1)) // find octave num
+                                {
+                                    octave = i + 1;
+                                    break;
+                                }
                             }
+
+                            starFlag = false;
+                            int oct7 = oct / 7; // find button num in octave
+                            var t = min + (oct * (octave - 1));
+                            if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
+                                PlaySound(100, $"C{octave}");
+                            else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
+                                PlaySound(100, $"D{octave}");
+                            else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
+                                PlaySound(100, $"E{octave}");
+                            else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
+                                PlaySound(100, $"F{octave}");
+                            else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
+                                PlaySound(100, $"G{octave}");
+                            else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
+                                PlaySound(100, $"A{octave}");
+                            else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
+                                PlaySound(100, $"B{octave}");
+                            this.Invoke(new Action(() => // delay between piano button push
+                            {
+                                Thread.Sleep(trackBar1.Value);
+                            }));
                         }
-
-                        starFlag = false;
-                        int oct7 = oct / 7; // find button num in octave
-                        var t = min + (oct * (octave - 1));
-                        if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
-                            PlaySound(100, $"C{octave}");
-                        else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
-                            PlaySound(100, $"D{octave}");
-                        else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
-                            PlaySound(100, $"E{octave}");
-                        else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
-                            PlaySound(100, $"F{octave}");
-                        else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
-                            PlaySound(100, $"G{octave}");
-                        else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
-                            PlaySound(100, $"A{octave}");
-                        else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
-                            PlaySound(100, $"B{octave}");
-                        this.Invoke(new Action(() => // delay between piano button push
-                        {
-                            Thread.Sleep(trackBar1.Value);
-                        }));
-
+                        if (arr[w, h].Name == "0")
+                            starFlag = true;
                     }
-                    if (arr[w, h].Name == "0")
-                        starFlag = true;
                 }
                 Thread.Sleep(10); // delay between pixel column go
             }
@@ -214,6 +218,11 @@ namespace Pic_Analyzator
         private void PlaySound(byte volume, string note)
         {
             MidiPlayer.Play(new NoteOn(0, 1, note, volume));
+        }
+
+        private void stopToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _stopPlay = true;
         }
     }
 }
