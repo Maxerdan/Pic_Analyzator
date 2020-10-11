@@ -19,8 +19,9 @@ namespace Pic_Analyzator
     {
         Bitmap _bitmap; // original picture
         List<Pixel> _pixel; // pixels array from original picture
+        Bitmap newBitmap;
         List<Pixel> _starPixel;
-        int _max = int.MinValue; // max brightness of all pixels
+        int _max; // max brightness of all pixels
 
         public Form1()
         {
@@ -93,7 +94,7 @@ namespace Pic_Analyzator
         {
             _starPixel = new List<Pixel>(_bitmap.Width * _bitmap.Height);
             int startedMax = _max / 4 * 3;
-            Bitmap newBitmap = new Bitmap(_bitmap.Width, _bitmap.Height);
+            newBitmap = new Bitmap(_bitmap.Width, _bitmap.Height);
             var counter = 0;
             foreach (var pixel in _pixel)
             {
@@ -111,6 +112,7 @@ namespace Pic_Analyzator
         // method to add all picture pixels into _pixels array
         private void FillPixelsArray()
         {
+            _max = int.MinValue;
             _pixel = new List<Pixel>(_bitmap.Width * _bitmap.Height);
             var arr = BitmapToByteRgb(_bitmap);
             for (var y = 0; y < _bitmap.Height; y++)
@@ -142,40 +144,68 @@ namespace Pic_Analyzator
 
         private void PlayMusic()
         {
+            int min = int.MaxValue;
             int W = _bitmap.Width;
             int H = _bitmap.Height;
             Color[,] arr = new Color[W, H];
             foreach (var pixel in _starPixel)
             {
                 arr[pixel.point.X, pixel.point.Y] = pixel.color;
+                if ((int)(pixel.color.GetBrightness() * 1000) < min)
+                    min = (int)(pixel.color.GetBrightness() * 1000);
             }
             // добавить количество октав как переменную извне + классификацию по нотам внутри октавы и
             // ОБЯЗАТЕЛЬНО написать алгоритм определения звезд и составления списка со звездами
 
             MidiPlayer.OpenMidi();
-            int oct = H / 7;
+            bool starFlag = true;
+            int oct = (_max - min) / 6;
+
             for (var w = 0; w < W; w++)
             {
+
                 for (var h = 0; h < H; h++)
                 {
-                    if (arr[w, h].Name != "0")
+                    if (arr[w, h].Name != "0" && starFlag)
                     {
-                        int octave = 1;
-                        for (var i = 0; i < 7; i++)
+                        var brightLevel = (int)(arr[w, h].GetBrightness() * 1000);
+                        int octave = 3;
+                        for (var i = 2; i < 6; i++)
                         {
-                            if (h > oct * i && h <= oct * (i + 1))
+                            if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1))
                             {
                                 octave = i + 1;
                                 break;
                             }
                         }
 
-                        PlaySound(100, $"C{octave}");
-                        Thread.Sleep(3000);
+                        starFlag = false;
+                        int oct7 = oct / 7;
+                        var t = min + (oct * (octave - 1));
+                        if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
+                            PlaySound(100, $"C{octave}");
+                        else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
+                            PlaySound(100, $"D{octave}");
+                        else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
+                            PlaySound(100, $"E{octave}");
+                        else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
+                            PlaySound(100, $"F{octave}");
+                        else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
+                            PlaySound(100, $"G{octave}");
+                        else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
+                            PlaySound(100, $"A{octave}");
+                        else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
+                            PlaySound(100, $"B{octave}");
+                        this.Invoke(new Action(() =>
+                    {
+                        Thread.Sleep(trackBar1.Value);
+                    }));
 
                     }
+                    if (arr[w, h].Name == "0")
+                        starFlag = true;
                 }
-                        Thread.Sleep(100);
+                Thread.Sleep(10);
             }
         }
 
