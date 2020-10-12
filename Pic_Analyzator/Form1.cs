@@ -166,8 +166,16 @@ namespace Pic_Analyzator
             bool starFlag = true;
             int oct = (_max - min) / 6; // 6 - max num of octaves
 
+            Bitmap redColumn;
+
             for (var w = 0; w < W; w++)
             {
+                redColumn = new Bitmap(newBitmap);
+                for (var i = 0; i < H; i++)
+                {
+                    redColumn.SetPixel(w, i, Color.IndianRed);
+                }
+                pictureBox2.Image = redColumn;
                 for (var h = 0; h < H; h++)
                 {
                     if (!_stopPlay)
@@ -213,6 +221,7 @@ namespace Pic_Analyzator
                 }
                 Thread.Sleep(10); // delay between pixel column go
             }
+            pictureBox2.Image = newBitmap;
         }
 
         private void PlaySound(byte volume, string note)
