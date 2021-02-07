@@ -22,6 +22,8 @@ namespace Pic_Analyzator
         Bitmap newBitmap;
         List<Pixel> _starPixel;
         int _max; // max brightness of all pixels
+        int _min; // min brightness level
+        Color[,] arr; // array contains analyzed pixel (star pixel)
         bool _stopPlay = false;
 
         public Form1()
@@ -89,6 +91,7 @@ namespace Pic_Analyzator
             FillPixelsArray();
             //await Task.Run(new Action(() => PixelParse())); // doesn't work cause it runs not in UI
             await Task.Run(new Action(() => PixelAnalysing()));
+            await Task.Run(new Action(() => FillArrayAndFindMin()));
         }
 
         // find pixels which brigthness more then 3/4 of max brigthness
@@ -130,6 +133,49 @@ namespace Pic_Analyzator
             TextLog("PixelParse done");
         }
 
+        private void FillArrayAndFindMin()
+        {
+            _min = int.MaxValue;
+            arr = new Color[_bitmap.Width, _bitmap.Height]; // array contains analyzed pixel (star pixel)
+            foreach (var pixel in _starPixel) // method to fill array and find min
+            {
+                arr[pixel.point.X, pixel.point.Y] = pixel.color;
+                if ((int)(pixel.color.GetBrightness() * 1000) < _min)
+                    _min = (int)(pixel.color.GetBrightness() * 1000);
+            }
+        }
+
+        private void FindStars()
+        {
+            int W = _bitmap.Width;
+            int H = _bitmap.Height;
+            for (var w = 0; w < W; w++)
+            {
+                for (var h = 0; h < H; h++)
+                {
+                    if (arr[w, h].Name != "0") // white
+                    {
+                        var queue = new Queue<Pixel>();
+                        queue.Enqueue(new Pixel() { point = new Point(w, h), color = arr[w, h] });
+                        while (queue.Count != 0)
+                        {
+
+                            if (arr[w - 1, h - 1].Name != "0")
+                                queue.Enqueue(new Pixel() { point = new Point(w - 1, h - 1), color = arr[w - 1, h - 1] });
+                            if (arr[w - 1, h + 1].Name != "0")
+                                queue.Enqueue(new Pixel() { point = new Point(w - 1, h + 1), color = arr[w - 1, h + 1] });
+                            if (arr[w + 1, h - 1].Name != "0")
+                                queue.Enqueue(new Pixel() { point = new Point(w + 1, h - 1), color = arr[w + 1, h - 1] });
+                            if (arr[w + 1, h + 1].Name != "0")
+                                queue.Enqueue(new Pixel() { point = new Point(w + 1, h + 1), color = arr[w + 1, h + 1] });
+                            // remove current pixel
+                            queue.Dequeue();
+                        }
+                    }
+                }
+            }
+        }
+
         // method to log caption
         private void TextLog(string text)
         {
@@ -149,22 +195,13 @@ namespace Pic_Analyzator
         private void PlayMusic()
         {
             _stopPlay = false;
-            int min = int.MaxValue; // min brightness level
+
             int W = _bitmap.Width;
             int H = _bitmap.Height;
-            Color[,] arr = new Color[W, H]; // array contains analyzed pixel (star pixel)
-            foreach (var pixel in _starPixel) // method to fill array and find min
-            {
-                arr[pixel.point.X, pixel.point.Y] = pixel.color;
-                if ((int)(pixel.color.GetBrightness() * 1000) < min)
-                    min = (int)(pixel.color.GetBrightness() * 1000);
-            }
-            // добавить количество октав как переменную извне
-            // разобраться с частотой нажатия клавиш чтобы не было грязной музыки
 
             MidiPlayer.OpenMidi();
             bool starFlag = true;
-            int oct = (_max - min) / 6; // 6 - max num of octaves
+            int oct = (_max - _min) / 6; // 6 - max num of octaves
 
             Bitmap redColumn;
 
@@ -186,7 +223,7 @@ namespace Pic_Analyzator
                             int octave = 3; // stock octave
                             for (var i = 2; i < 6; i++)
                             {
-                                if (brightLevel > min + oct * i && brightLevel <= min + oct * (i + 1)) // find octave num
+                                if (brightLevel > _min + oct * i && brightLevel <= _min + oct * (i + 1)) // find octave num
                                 {
                                     octave = i + 1;
                                     break;
@@ -195,7 +232,7 @@ namespace Pic_Analyzator
 
                             starFlag = false;
                             int oct7 = oct / 7; // find button num in octave
-                            var t = min + (oct * (octave - 1));
+                            var t = _min + (oct * (octave - 1));
                             if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
                                 PlaySound(100, $"C{octave}");
                             else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
