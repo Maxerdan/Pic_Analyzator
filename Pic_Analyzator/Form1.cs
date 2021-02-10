@@ -26,6 +26,8 @@ namespace Pic_Analyzator
         Color[,] arr; // array contains analyzed pixel (star pixel)
         bool _stopPlay = false;
 
+        List<List<Pixel>> stars;
+
         public Form1()
         {
             InitializeComponent();
@@ -89,7 +91,6 @@ namespace Pic_Analyzator
             }
 
             FillPixelsArray();
-            //await Task.Run(new Action(() => PixelParse())); // doesn't work cause it runs not in UI
             await Task.Run(new Action(() => PixelAnalysing()));
             await Task.Run(new Action(() => FillArrayAndFindMin()));
         }
@@ -100,14 +101,12 @@ namespace Pic_Analyzator
             _starPixel = new List<Pixel>(_bitmap.Width * _bitmap.Height);
             int startedMax = _max / 4 * 3;
             newBitmap = new Bitmap(_bitmap.Width, _bitmap.Height);
-            var counter = 0;
             foreach (var pixel in _pixel)
             {
-                counter++;
-                if ((int)(pixel.color.GetBrightness() * 1000) > startedMax)
+                if ((int)(pixel.Color.GetBrightness() * 1000) > startedMax)
                 {
-                    newBitmap.SetPixel(pixel.point.X, pixel.point.Y, pixel.color);
-                    _starPixel.Add(new Pixel() { point = new Point(pixel.point.X, pixel.point.Y), color = pixel.color });
+                    newBitmap.SetPixel(pixel.Point.X, pixel.Point.Y, pixel.Color);
+                    _starPixel.Add(new Pixel() { Point = new Point(pixel.Point.X, pixel.Point.Y), Color = pixel.Color });
                 }
             }
             TextLog("Analyze done");
@@ -125,7 +124,7 @@ namespace Pic_Analyzator
                 for (var x = 0; x < _bitmap.Width; x++)
                 {
                     var color = Color.FromArgb(arr[0, y, x], arr[1, y, x], arr[2, y, x], arr[3, y, x]);
-                    _pixel.Add(new Pixel() { point = new Point(x, y), color = color });
+                    _pixel.Add(new Pixel() { Point = new Point(x, y), Color = color });
                     if ((int)(color.GetBrightness() * 1000) > _max)
                         _max = (int)(color.GetBrightness() * 1000);
                 }
@@ -139,41 +138,79 @@ namespace Pic_Analyzator
             arr = new Color[_bitmap.Width, _bitmap.Height]; // array contains analyzed pixel (star pixel)
             foreach (var pixel in _starPixel) // method to fill array and find min
             {
-                arr[pixel.point.X, pixel.point.Y] = pixel.color;
-                if ((int)(pixel.color.GetBrightness() * 1000) < _min)
-                    _min = (int)(pixel.color.GetBrightness() * 1000);
+                arr[pixel.Point.X, pixel.Point.Y] = pixel.Color;
+                if ((int)(pixel.Color.GetBrightness() * 1000) < _min)
+                    _min = (int)(pixel.Color.GetBrightness() * 1000);
             }
         }
 
         private void FindStars()
         {
+            stars = new List<List<Pixel>>();
             int W = _bitmap.Width;
             int H = _bitmap.Height;
+            var visitedNodes = new int[W, H];
             for (var w = 0; w < W; w++)
             {
                 for (var h = 0; h < H; h++)
                 {
-                    if (arr[w, h].Name != "0") // white
+                    List<Pixel> aloneStarPixels = new List<Pixel>();
+                    var queue = new Queue<Pixel>();
+                    queue.Enqueue(new Pixel() { Point = new Point(w, h), Color = arr[w, h] });
+                    visitedNodes[w, h] = 1; // заменить на структуру которая считает 1 как true для сравнения
+                    while (queue.Count != 0)
                     {
-                        var queue = new Queue<Pixel>();
-                        queue.Enqueue(new Pixel() { point = new Point(w, h), color = arr[w, h] });
-                        while (queue.Count != 0)
-                        {
+                        var node = queue.Dequeue();
+                        var x = node.Point.X;
+                        var y = node.Point.Y;
 
-                            if (arr[w - 1, h - 1].Name != "0")
-                                queue.Enqueue(new Pixel() { point = new Point(w - 1, h - 1), color = arr[w - 1, h - 1] });
-                            if (arr[w - 1, h + 1].Name != "0")
-                                queue.Enqueue(new Pixel() { point = new Point(w - 1, h + 1), color = arr[w - 1, h + 1] });
-                            if (arr[w + 1, h - 1].Name != "0")
-                                queue.Enqueue(new Pixel() { point = new Point(w + 1, h - 1), color = arr[w + 1, h - 1] });
-                            if (arr[w + 1, h + 1].Name != "0")
-                                queue.Enqueue(new Pixel() { point = new Point(w + 1, h + 1), color = arr[w + 1, h + 1] });
-                            // remove current pixel
-                            queue.Dequeue();
+                        if (arr[x, y].Name != "0")
+                        {
+                            aloneStarPixels.Add(new Pixel() { Point = new Point(x, y), Color = arr[x, y] });
+                            if (y - 1 >= 0)
+                                if (visitedNodes[x, y - 1] == 0) //todo
+                                {
+                                    queue.Enqueue(new Pixel() { Point = new Point(x, y - 1), Color = arr[x, y - 1] });
+                                    visitedNodes[x, y - 1] = 1; // todo
+                                }
+                            if (y + 1 < H)
+                                if (visitedNodes[x, y + 1] == 0) // todo
+                                {
+                                    queue.Enqueue(new Pixel() { Point = new Point(x, y + 1), Color = arr[x, y + 1] });
+                                    visitedNodes[x, y + 1] = 1; // todo
+                                }
+                            if (x - 1 >= 0)
+                                if (visitedNodes[x - 1, y] == 0)// todo
+                                {
+                                    queue.Enqueue(new Pixel() { Point = new Point(x - 1, y), Color = arr[x - 1, y] });
+                                    visitedNodes[x - 1, y] = 1; // todo
+                                }
+                            if (x + 1 < W)
+                                if (visitedNodes[x + 1, y] == 0) // todo
+                                {
+                                    queue.Enqueue(new Pixel() { Point = new Point(x + 1, y), Color = arr[x + 1, y] });
+                                    visitedNodes[x + 1, y] = 1; // todo
+                                }
                         }
                     }
+                    if (aloneStarPixels.Count != 0 && aloneStarPixels.Count != 1)
+                        stars.Add(aloneStarPixels);
                 }
             }
+        }
+
+        private void ColorizeStars()
+        {
+            var bitmap = new Bitmap(_bitmap.Width, _bitmap.Height);
+            foreach(var arrays in stars)
+            {
+                foreach(var pixels in arrays)
+                {
+                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
+                }
+            }
+
+            pictureBox1.Image = bitmap;
         }
 
         // method to log caption
@@ -269,6 +306,12 @@ namespace Pic_Analyzator
         private void stopToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _stopPlay = true;
+        }
+
+        private void findStarToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FindStars();
+            ColorizeStars();
         }
     }
 }
