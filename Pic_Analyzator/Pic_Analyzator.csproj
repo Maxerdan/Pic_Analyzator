@@ -57,6 +57,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Nebula.cs" />
     <Compile Include="Origin.cs" />
     <Compile Include="Pixel.cs" />
     <Compile Include="Program.cs" />
