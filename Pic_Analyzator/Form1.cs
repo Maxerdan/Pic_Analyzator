@@ -212,62 +212,6 @@ namespace Pic_Analyzator
                 }
         }
 
-        private void FindNebula()
-        {
-            stars = new List<List<Pixel>>();
-            var visitedNodes = new int[Origin.W, Origin.H];
-
-            for (var w = 0; w < Origin.W; w++)
-                for (var h = 0; h < Origin.H; h++)
-                {
-                    var aloneStarPixels = new List<Pixel>();
-                    var queue = new Queue<Pixel>();
-                    queue.Enqueue(new Pixel { Point = new Point(w, h), Color = GetColor(w, h) });
-                    visitedNodes[w, h] = 1; // заменить на структуру которая считает 1 как true для сравнения
-                    while (queue.Count != 0)
-                    {
-                        var node = queue.Dequeue();
-                        var x = node.Point.X;
-                        var y = node.Point.Y;
-
-                        if (GetColor(x, y).Name != "0")
-                        {
-                            aloneStarPixels.Add(new Pixel { Point = new Point(x, y), Color = GetColor(x, y) });
-                            if (y - 1 >= 0)
-                                if (visitedNodes[x, y - 1] == 0) //todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x, y - 1), Color = GetColor(x, y - 1) });
-                                    visitedNodes[x, y - 1] = 1; // todo
-                                }
-
-                            if (y + 1 < Origin.H)
-                                if (visitedNodes[x, y + 1] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x, y + 1), Color = GetColor(x, y + 1) });
-                                    visitedNodes[x, y + 1] = 1; // todo
-                                }
-
-                            if (x - 1 >= 0)
-                                if (visitedNodes[x - 1, y] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x - 1, y), Color = GetColor(x - 1, y) });
-                                    visitedNodes[x - 1, y] = 1; // todo
-                                }
-
-                            if (x + 1 < Origin.W)
-                                if (visitedNodes[x + 1, y] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x + 1, y), Color = GetColor(x + 1, y) });
-                                    visitedNodes[x + 1, y] = 1; // todo
-                                }
-                        }
-                    }
-
-                    if (aloneStarPixels.Count != 0 && aloneStarPixels.Count != 1)
-                        stars.Add(aloneStarPixels);
-                }
-        }
-
         private void ColorizeStars()
         {
             var bitmap = new Bitmap(Origin.W, Origin.H);
@@ -294,6 +238,7 @@ namespace Pic_Analyzator
         private void PlayMusic()
         {
             _stopPlay = false;
+            var speedValue = 100;
 
             MidiPlayer.OpenMidi();
             var starFlag = true;
@@ -340,7 +285,7 @@ namespace Pic_Analyzator
                                 PlaySound(100, $"B{octave}");
                             Invoke(new Action(() => // delay between piano button push
                             {
-                                Thread.Sleep(trackBar1.Value);
+                                Thread.Sleep(speedValue);
                             }));
                         }
 

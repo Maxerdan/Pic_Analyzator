@@ -35,11 +35,10 @@
             this.playSoundToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findStarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findNebulaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.trackBar1 = new System.Windows.Forms.TrackBar();
-            this.findNebulaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -47,7 +46,6 @@
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -106,24 +104,31 @@
             this.findStarToolStripMenuItem.Text = "FindStar";
             this.findStarToolStripMenuItem.Click += new System.EventHandler(this.findStarToolStripMenuItem_Click);
             // 
+            // findNebulaToolStripMenuItem
+            // 
+            this.findNebulaToolStripMenuItem.Name = "findNebulaToolStripMenuItem";
+            this.findNebulaToolStripMenuItem.Size = new System.Drawing.Size(99, 24);
+            this.findNebulaToolStripMenuItem.Text = "FindNebula";
+            this.findNebulaToolStripMenuItem.Click += new System.EventHandler(this.findNebulaToolStripMenuItem_Click);
+            // 
             // pictureBox1
             // 
-            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 58);
+            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(351, 270);
+            this.pictureBox1.Size = new System.Drawing.Size(351, 328);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             // 
             // pictureBox2
             // 
-            this.pictureBox2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pictureBox2.Location = new System.Drawing.Point(0, 58);
+            this.pictureBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pictureBox2.Location = new System.Drawing.Point(0, 0);
             this.pictureBox2.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(348, 270);
+            this.pictureBox2.Size = new System.Drawing.Size(348, 328);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox2.TabIndex = 2;
             this.pictureBox2.TabStop = false;
@@ -143,37 +148,10 @@
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.trackBar1);
             this.splitContainer1.Panel2.Controls.Add(this.pictureBox2);
             this.splitContainer1.Size = new System.Drawing.Size(711, 332);
             this.splitContainer1.SplitterDistance = 355;
             this.splitContainer1.TabIndex = 3;
-            // 
-            // trackBar1
-            // 
-            this.trackBar1.BackColor = System.Drawing.SystemColors.Menu;
-            this.trackBar1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.trackBar1.Enabled = false;
-            this.trackBar1.LargeChange = 100;
-            this.trackBar1.Location = new System.Drawing.Point(0, 0);
-            this.trackBar1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.trackBar1.Maximum = 1000;
-            this.trackBar1.Minimum = 100;
-            this.trackBar1.Name = "trackBar1";
-            this.trackBar1.Size = new System.Drawing.Size(348, 56);
-            this.trackBar1.SmallChange = 100;
-            this.trackBar1.TabIndex = 50;
-            this.trackBar1.TickFrequency = 100;
-            this.trackBar1.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.trackBar1.Value = 100;
-            this.trackBar1.Visible = false;
-            // 
-            // findNebulaToolStripMenuItem
-            // 
-            this.findNebulaToolStripMenuItem.Name = "findNebulaToolStripMenuItem";
-            this.findNebulaToolStripMenuItem.Size = new System.Drawing.Size(99, 24);
-            this.findNebulaToolStripMenuItem.Text = "FindNebula";
-            this.findNebulaToolStripMenuItem.Click += new System.EventHandler(this.findNebulaToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -193,10 +171,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
-            this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -212,7 +188,6 @@
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.ToolStripMenuItem playSoundToolStripMenuItem;
-        private System.Windows.Forms.TrackBar trackBar1;
         private System.Windows.Forms.ToolStripMenuItem stopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findStarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findNebulaToolStripMenuItem;
