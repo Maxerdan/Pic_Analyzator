@@ -14,8 +14,6 @@ namespace Pic_Analyzator
     {
         private bool _stopPlay;
 
-        private List<List<Pixel>> stars;
-
         public Form1()
         {
             InitializeComponent();
@@ -82,10 +80,10 @@ namespace Pic_Analyzator
 
             FillPixelsArray();
             await Task.Run(() => TakeStarPixels());
-            await Task.Run(() => FindMin());
+            await Task.Run(() => TakeNebulaPixels());
         }
 
-        // method to add all picture pixels into _pixels array
+        // method to add all picture pixels into array and find Max
         private void FillPixelsArray()
         {
             var max = int.MinValue;
@@ -101,13 +99,12 @@ namespace Pic_Analyzator
                 }
 
             Origin.Max = max;
-            TextLog("PixelParse done");
+            TextLog("Find Max");
         }
 
         // find pixels which brigthness more then 3/4 of max brigthness
         private void TakeStarPixels()
         {
-            var starPixels = new List<Pixel>(Origin.W * Origin.H);
             var startedMax = Origin.Max / 4 * 3;
 
             var bitmap = new Bitmap(Origin.W, Origin.H);
@@ -115,13 +112,13 @@ namespace Pic_Analyzator
                 if ((int)(pixel.Color.GetBrightness() * 1000) > startedMax)
                 {
                     bitmap.SetPixel(pixel.Point.X, pixel.Point.Y, pixel.Color);
-                    starPixels.Add(new Pixel { Point = new Point(pixel.Point.X, pixel.Point.Y), Color = pixel.Color });
                 }
 
-            Stars.Pixels = starPixels;
-            pictureBox2.Image = bitmap;
             Stars.Bitmap = bitmap;
-            TextLog("Analyze done");
+            TextLog("NewBitmap 3/4 of max brightness");
+
+            FindStars();
+            FindMin();
         }
 
         private void TakeNebulaPixels()
@@ -139,26 +136,26 @@ namespace Pic_Analyzator
                 }
 
             Nebula.Pixels = nebulaPixels;
-            pictureBox2.Image = bitmap;
             Nebula.Bitmap = bitmap;
-            TextLog("Analyze done");
+            TextLog("Nebula Done");
         }
 
         private void FindMin()
         {
             var min = int.MaxValue;
-            foreach (var pixel in Stars.Pixels) // method to fill array and find min
-            {
-                if ((int)(pixel.Color.GetBrightness() * 1000) < min)
-                    min = (int)(pixel.Color.GetBrightness() * 1000);
-            }
+            foreach (var star in Stars.ListOfStars) // method to fill array and find min
+                foreach (var pixel in star)
+                {
+                    if ((int)(pixel.Color.GetBrightness() * 1000) < min)
+                        min = (int)(pixel.Color.GetBrightness() * 1000);
+                }
 
             Origin.Min = min;
         }
 
         private void FindStars()
         {
-            stars = new List<List<Pixel>>();
+            Stars.ListOfStars = new List<List<Pixel>>();
             var visitedNodes = new int[Origin.W, Origin.H];
 
             for (var w = 0; w < Origin.W; w++)
@@ -208,18 +205,9 @@ namespace Pic_Analyzator
                     }
 
                     if (aloneStarPixels.Count != 0 && aloneStarPixels.Count != 1)
-                        stars.Add(aloneStarPixels);
+                        Stars.ListOfStars.Add(aloneStarPixels);
                 }
-        }
-
-        private void ColorizeStars()
-        {
-            var bitmap = new Bitmap(Origin.W, Origin.H);
-            foreach (var arrays in stars)
-                foreach (var pixels in arrays)
-                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
-
-            pictureBox1.Image = bitmap;
+            TextLog("Stars Done");
         }
 
         // method to log caption
@@ -241,56 +229,53 @@ namespace Pic_Analyzator
             var speedValue = 100;
 
             MidiPlayer.OpenMidi();
-            var starFlag = true;
             var oct = (Origin.Max - Origin.Min) / 6; // 6 - max num of octaves
 
             Bitmap redColumn;
 
             for (var w = 0; w < Origin.W; w++)
             {
+                if (_stopPlay)
+                {
+                    break;
+                }
+
                 redColumn = new Bitmap(Stars.Bitmap);
                 for (var i = 0; i < Origin.H; i++) redColumn.SetPixel(w, i, Color.IndianRed);
                 pictureBox2.Image = redColumn;
                 for (var h = 0; h < Origin.H; h++)
-                    if (!_stopPlay)
+                    if (GetColor(w, h).Name != "0")
                     {
-                        if (GetColor(w, h).Name != "0" && starFlag)
-                        {
-                            var brightLevel = (int)(GetColor(w, h).GetBrightness() * 1000); // get bright level form pixel
-                            var octave = 3; // stock octave
-                            for (var i = 2; i < 6; i++)
-                                if (brightLevel > Origin.Min + oct * i && brightLevel <= Origin.Min + oct * (i + 1)
-                                ) // find octave num
-                                {
-                                    octave = i + 1;
-                                    break;
-                                }
-
-                            starFlag = false;
-                            var oct7 = oct / 7; // find button num in octave
-                            var t = Origin.Min + oct * (octave - 1);
-                            if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
-                                PlaySound(100, $"C{octave}");
-                            else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
-                                PlaySound(100, $"D{octave}");
-                            else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
-                                PlaySound(100, $"E{octave}");
-                            else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
-                                PlaySound(100, $"F{octave}");
-                            else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
-                                PlaySound(100, $"G{octave}");
-                            else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
-                                PlaySound(100, $"A{octave}");
-                            else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
-                                PlaySound(100, $"B{octave}");
-                            Invoke(new Action(() => // delay between piano button push
+                        var brightLevel = (int)(GetColor(w, h).GetBrightness() * 1000); // get bright level form pixel
+                        var octave = 3; // stock octave
+                        for (var i = 2; i < 6; i++)
+                            if (brightLevel > Origin.Min + oct * i && brightLevel <= Origin.Min + oct * (i + 1)
+                            ) // find octave num
                             {
-                                Thread.Sleep(speedValue);
-                            }));
-                        }
+                                octave = i + 1;
+                                break;
+                            }
 
-                        if (GetColor(w, h).Name == "0")
-                            starFlag = true;
+                        var oct7 = oct / 7; // find button num in octave
+                        var t = Origin.Min + oct * (octave - 1);
+                        if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
+                            PlaySound(100, $"C{octave}");
+                        else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
+                            PlaySound(100, $"D{octave}");
+                        else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
+                            PlaySound(100, $"E{octave}");
+                        else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
+                            PlaySound(100, $"F{octave}");
+                        else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
+                            PlaySound(100, $"G{octave}");
+                        else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
+                            PlaySound(100, $"A{octave}");
+                        else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
+                            PlaySound(100, $"B{octave}");
+                        Invoke(new Action(() => // delay between piano button push
+                        {
+                            Thread.Sleep(speedValue);
+                        }));
                     }
 
                 Thread.Sleep(10); // delay between pixel column go
@@ -311,8 +296,13 @@ namespace Pic_Analyzator
 
         private void findStarToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FindStars();
-            ColorizeStars();
+            var bitmap = new Bitmap(Origin.W, Origin.H);
+            foreach (var arrays in Stars.ListOfStars)
+                foreach (var pixels in arrays)
+                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
+
+            Stars.Bitmap = bitmap;
+            pictureBox2.Image = bitmap;
         }
 
         void OriginBitmapInit(string fileName)
@@ -330,7 +320,12 @@ namespace Pic_Analyzator
 
         private void findNebulaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            TakeNebulaPixels();
+            pictureBox2.Image = Nebula.Bitmap;
+        }
+
+        private void showOriginToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pictureBox1.Image = Origin.Bitmap;
         }
     }
 }

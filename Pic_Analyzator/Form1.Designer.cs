@@ -39,6 +39,7 @@
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.showOriginToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -59,7 +60,8 @@
             this.fileToolStripMenuItem,
             this.stopToolStripMenuItem,
             this.findStarToolStripMenuItem,
-            this.findNebulaToolStripMenuItem});
+            this.findNebulaToolStripMenuItem,
+            this.showOriginToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
@@ -73,7 +75,7 @@
             this.openToolStripMenuItem,
             this.playSoundToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 26);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // openToolStripMenuItem
@@ -93,14 +95,14 @@
             // stopToolStripMenuItem
             // 
             this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
-            this.stopToolStripMenuItem.Size = new System.Drawing.Size(54, 24);
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(54, 26);
             this.stopToolStripMenuItem.Text = "Stop";
             this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
             // 
             // findStarToolStripMenuItem
             // 
             this.findStarToolStripMenuItem.Name = "findStarToolStripMenuItem";
-            this.findStarToolStripMenuItem.Size = new System.Drawing.Size(77, 24);
+            this.findStarToolStripMenuItem.Size = new System.Drawing.Size(77, 26);
             this.findStarToolStripMenuItem.Text = "FindStar";
             this.findStarToolStripMenuItem.Click += new System.EventHandler(this.findStarToolStripMenuItem_Click);
             // 
@@ -153,6 +155,13 @@
             this.splitContainer1.SplitterDistance = 355;
             this.splitContainer1.TabIndex = 3;
             // 
+            // showOriginToolStripMenuItem
+            // 
+            this.showOriginToolStripMenuItem.Name = "showOriginToolStripMenuItem";
+            this.showOriginToolStripMenuItem.Size = new System.Drawing.Size(100, 24);
+            this.showOriginToolStripMenuItem.Text = "ShowOrigin";
+            this.showOriginToolStripMenuItem.Click += new System.EventHandler(this.showOriginToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -164,7 +173,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Space sonication";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -191,6 +200,7 @@
         private System.Windows.Forms.ToolStripMenuItem stopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findStarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findNebulaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem showOriginToolStripMenuItem;
     }
 }
 
