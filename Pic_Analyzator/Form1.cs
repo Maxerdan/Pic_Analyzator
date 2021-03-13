@@ -144,7 +144,7 @@ namespace Pic_Analyzator
         {
             var min = int.MaxValue;
             foreach (var star in Stars.ListOfStars) // method to fill array and find min
-                foreach (var pixel in star)
+                foreach (var pixel in star.StarPixels)
                 {
                     if ((int)(pixel.Color.GetBrightness() * 1000) < min)
                         min = (int)(pixel.Color.GetBrightness() * 1000);
@@ -155,7 +155,7 @@ namespace Pic_Analyzator
 
         private void FindStars()
         {
-            Stars.ListOfStars = new List<List<Pixel>>();
+            Stars.ListOfStars = new List<OneStar>();
             var visitedNodes = new int[Origin.W, Origin.H];
 
             for (var w = 0; w < Origin.W; w++)
@@ -205,7 +205,11 @@ namespace Pic_Analyzator
                     }
 
                     if (aloneStarPixels.Count != 0 && aloneStarPixels.Count != 1)
-                        Stars.ListOfStars.Add(aloneStarPixels);
+                        Stars.ListOfStars.Add(new OneStar()
+                        {
+                            StarPixels = aloneStarPixels,
+                            StarCenter = TakeStarCenter(aloneStarPixels),
+                        });
                 }
             TextLog("Stars Done");
         }
@@ -222,13 +226,110 @@ namespace Pic_Analyzator
             await Task.Run(() => PlayMusic());
         }
 
-        // method to play music
+        // old method to play music
         private void PlayMusic()
+        {
+            _stopPlay = false;
+            var speedValue = 100;
+            MidiPlayer.OpenMidi();
+            Bitmap redColumn;
+
+            for (var w = 0; w < Origin.W; w++)
+            {
+                if (_stopPlay)
+                {
+                    break;
+                }
+
+                redColumn = new Bitmap(Stars.Bitmap);
+                for (var i = 0; i < Origin.H; i++)
+                    redColumn.SetPixel(w, i, Color.IndianRed);
+                pictureBox2.Image = redColumn;
+
+                var octaveLengthInPixels = Origin.H / 2; // 2 - octaves number
+                var starsOnLine = Stars.ListOfStars.FindAll(x => x.StarCenter.X == w);
+                foreach (var star in starsOnLine)
+                {
+                    int octave;
+                    if (star.StarCenter.Y < octaveLengthInPixels)
+                        octave = 4;
+                    else
+                        octave = 3;
+
+                    var buttonLength = octaveLengthInPixels / 7;
+                    var octSumLength = Math.Abs(octave - 4) * octaveLengthInPixels;
+                    if (star.StarCenter.Y > octSumLength && star.StarCenter.Y <= octSumLength + buttonLength)
+                        PlaySound(100, $"B{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength && star.StarCenter.Y <= octSumLength + buttonLength * 2)
+                        PlaySound(100, $"A{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength * 2 && star.StarCenter.Y <= octSumLength + buttonLength * 3)
+                        PlaySound(100, $"G{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength * 3 && star.StarCenter.Y <= octSumLength + buttonLength * 4)
+                        PlaySound(100, $"F{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength * 4 && star.StarCenter.Y <= octSumLength + buttonLength * 5)
+                        PlaySound(100, $"E{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength * 5 && star.StarCenter.Y <= octSumLength + buttonLength * 6)
+                        PlaySound(100, $"D{octave}");
+                    else if (star.StarCenter.Y > octSumLength + buttonLength * 6 && star.StarCenter.Y <= octSumLength + buttonLength * 7)
+                        PlaySound(100, $"C{octave}");
+                    Invoke(new Action(() => // delay between piano button push
+                    {
+                        Thread.Sleep(speedValue);
+                    }));
+                }
+
+                Thread.Sleep(10); // delay between pixel column go
+            }
+
+            pictureBox2.Image = Stars.Bitmap;
+        }
+
+        private Point TakeStarCenter(List<Pixel> starPixels)
+        {
+            var maxX = int.MinValue;
+            var minX = int.MaxValue;
+            var maxY = int.MinValue;
+            var minY = int.MaxValue;
+            int centerX;
+            int centerY;
+
+            foreach (var pixel in starPixels)
+            {
+                if (pixel.Point.X > maxX)
+                    maxX = pixel.Point.X;
+                if (pixel.Point.X < minX)
+                    minX = pixel.Point.X;
+                if (pixel.Point.Y > maxY)
+                    maxY = pixel.Point.Y;
+                if (pixel.Point.Y < minY)
+                    minY = pixel.Point.Y;
+            }
+
+            if (maxX == minX)
+                centerX = maxX;
+            else
+            {
+                centerX = ((maxX - minX) / 2) + minX;
+            }
+
+            if (maxY == minY)
+                centerY = maxY;
+            else
+            {
+                centerY = ((maxY - minY) / 2) + minY;
+            }
+
+            return new Point(centerX, centerY);
+        }
+
+        // old method to play music
+        private void PlayMusicOld()
         {
             _stopPlay = false;
             var speedValue = 100;
 
             MidiPlayer.OpenMidi();
+            MidiPlayer.Play(new ProgramChange(0, 1, GeneralMidiInstruments.Rain));
             var oct = (Origin.Max - Origin.Min) / 6; // 6 - max num of octaves
 
             Bitmap redColumn;
@@ -297,8 +398,8 @@ namespace Pic_Analyzator
         private void findStarToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var bitmap = new Bitmap(Origin.W, Origin.H);
-            foreach (var arrays in Stars.ListOfStars)
-                foreach (var pixels in arrays)
+            foreach (var oneStar in Stars.ListOfStars)
+                foreach (var pixels in oneStar.StarPixels)
                     bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
 
             Stars.Bitmap = bitmap;
@@ -325,7 +426,13 @@ namespace Pic_Analyzator
 
         private void showOriginToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            pictureBox1.Image = Origin.Bitmap;
+            //pictureBox1.Image = Origin.Bitmap;
+            var bitmap = new Bitmap(Origin.W, Origin.H);
+            foreach(var star in Stars.ListOfStars)
+            {
+                bitmap.SetPixel(star.StarCenter.X, star.StarCenter.Y, Color.IndianRed);
+            }
+            pictureBox1.Image = bitmap;
         }
     }
 }
