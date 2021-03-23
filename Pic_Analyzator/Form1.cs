@@ -17,6 +17,7 @@ namespace Pic_Analyzator
         public Form1()
         {
             InitializeComponent();
+            soundType.DataSource = Enum.GetValues(typeof(GeneralMidiInstruments));
         }
 
         // method to get the picture and not to occupy it
@@ -209,9 +210,27 @@ namespace Pic_Analyzator
                         {
                             StarPixels = aloneStarPixels,
                             StarCenter = TakeStarCenter(aloneStarPixels),
+                            AverageBrightness = TakeAverageBrightness(aloneStarPixels)
                         });
                 }
+            FindMaxAndMinAverageBrightness();
             TextLog("Stars Done");
+        }
+
+        private void FindMaxAndMinAverageBrightness()
+        {
+            var min = int.MaxValue;
+            var max = int.MinValue;
+            foreach (var star in Stars.ListOfStars)
+            {
+                if (star.AverageBrightness > max)
+                    max = star.AverageBrightness;
+                if (star.AverageBrightness < min)
+                    min = star.AverageBrightness;
+            }
+
+            Stars.MaxBrightness = max;
+            Stars.MinBrightness = min;
         }
 
         // method to log caption
@@ -231,13 +250,24 @@ namespace Pic_Analyzator
         {
             _stopPlay = false;
             var speedValue = 100;
+
             MidiPlayer.OpenMidi();
+
+            Invoke(new Action(() =>
+            {
+                MidiPlayer.Play(new ProgramChange(0, 1, (GeneralMidiInstruments)soundType.SelectedItem));
+            }));
             Bitmap redColumn;
 
             for (var w = 0; w < Origin.W; w++)
             {
                 if (_stopPlay)
                 {
+                    string[] allButtons = { "A3", "B3", "C3", "D3", "E3", "F3", "G3", "A4", "B4", "C4", "D4", "E4", "F4", "G4", };
+                    foreach (var button in allButtons)
+                    {
+                        MidiPlayer.Play(new NoteOff(0, 1, button, 100));
+                    }
                     break;
                 }
 
@@ -258,27 +288,52 @@ namespace Pic_Analyzator
 
                     var buttonLength = octaveLengthInPixels / 7;
                     var octSumLength = Math.Abs(octave - 4) * octaveLengthInPixels;
-                    if (star.StarCenter.Y > octSumLength && star.StarCenter.Y <= octSumLength + buttonLength)
-                        PlaySound(100, $"B{octave}");
+                    var button = "";
+                    if (star.StarCenter.Y >= octSumLength && star.StarCenter.Y <= octSumLength + buttonLength)
+                        button = $"B{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength && star.StarCenter.Y <= octSumLength + buttonLength * 2)
-                        PlaySound(100, $"A{octave}");
+                        button = $"A{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength * 2 && star.StarCenter.Y <= octSumLength + buttonLength * 3)
-                        PlaySound(100, $"G{octave}");
+                        button = $"G{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength * 3 && star.StarCenter.Y <= octSumLength + buttonLength * 4)
-                        PlaySound(100, $"F{octave}");
+                        button = $"F{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength * 4 && star.StarCenter.Y <= octSumLength + buttonLength * 5)
-                        PlaySound(100, $"E{octave}");
+                        button = $"E{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength * 5 && star.StarCenter.Y <= octSumLength + buttonLength * 6)
-                        PlaySound(100, $"D{octave}");
+                        button = $"D{octave}";
                     else if (star.StarCenter.Y > octSumLength + buttonLength * 6 && star.StarCenter.Y <= octSumLength + buttonLength * 7)
-                        PlaySound(100, $"C{octave}");
+                        button = $"C{octave}";
+
+                    if (button == "")
+                    {
+                        MessageBox.Show($"{star.StarCenter.Y} {octSumLength} {octSumLength + buttonLength * 7}");
+                    }
+
+                    var volume = 0;
+                    var intervalNumber = 20;
+                    var intervalMin = 60;
+                    var intervalMax = 120;
+                    var intervalLength = (intervalMax - intervalMin) / intervalNumber;
+                    double brightnessIntervalLength = (Stars.MaxBrightness - Stars.MinBrightness) / (double)intervalNumber;
+                    for (var i = 0; i < intervalNumber; i++)
+                    {
+                        if (star.AverageBrightness >= Stars.MinBrightness + brightnessIntervalLength * i && star.AverageBrightness <= Stars.MinBrightness + brightnessIntervalLength * (i + 1))
+                            volume = intervalMin + intervalLength * i;
+                        if (star.AverageBrightness == Stars.MaxBrightness)
+                            volume = intervalMax;
+                    }
+
+
+
+                    PlaySound((byte)volume, button);
                     Invoke(new Action(() => // delay between piano button push
                     {
                         Thread.Sleep(speedValue);
                     }));
                 }
 
-                Thread.Sleep(10); // delay between pixel column go
+
+                Thread.Sleep(int.Parse(columnSpeed.Text)); // delay between pixel column go
             }
 
             pictureBox2.Image = Stars.Bitmap;
@@ -329,7 +384,7 @@ namespace Pic_Analyzator
             var speedValue = 100;
 
             MidiPlayer.OpenMidi();
-            MidiPlayer.Play(new ProgramChange(0, 1, GeneralMidiInstruments.Rain));
+            MidiPlayer.Play(new ProgramChange(0, 1, GeneralMidiInstruments.SciFi));
             var oct = (Origin.Max - Origin.Min) / 6; // 6 - max num of octaves
 
             Bitmap redColumn;
@@ -383,6 +438,7 @@ namespace Pic_Analyzator
             }
 
             pictureBox2.Image = Stars.Bitmap;
+            MidiPlayer.CloseMidi();
         }
 
         private void PlaySound(byte volume, string note)
@@ -428,11 +484,22 @@ namespace Pic_Analyzator
         {
             //pictureBox1.Image = Origin.Bitmap;
             var bitmap = new Bitmap(Origin.W, Origin.H);
-            foreach(var star in Stars.ListOfStars)
+            foreach (var star in Stars.ListOfStars)
             {
                 bitmap.SetPixel(star.StarCenter.X, star.StarCenter.Y, Color.IndianRed);
             }
             pictureBox1.Image = bitmap;
+        }
+
+        private int TakeAverageBrightness(List<Pixel> starPixels)
+        {
+            var brightnessSum = 0;
+            foreach (var pixel in starPixels)
+            {
+                brightnessSum += (int)(pixel.Color.GetBrightness() * 1000);
+            }
+
+            return brightnessSum / starPixels.Count;
         }
     }
 }

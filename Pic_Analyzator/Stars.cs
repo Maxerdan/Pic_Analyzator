@@ -8,6 +8,10 @@ namespace Pic_Analyzator
         public static Bitmap Bitmap { get; set; }
 
         public static List<OneStar> ListOfStars { get; set; }
+
+        public static int MaxBrightness { get; set; }
+
+        public static int MinBrightness { get; set; }
     }
 
     class OneStar
@@ -16,6 +20,6 @@ namespace Pic_Analyzator
 
         public Point StarCenter { get; set; }
 
-        public Color AverageBrightness { get; set; }
+        public int AverageBrightness { get; set; }
     }
 }
