@@ -213,6 +213,17 @@ namespace Pic_Analyzator
                             AverageBrightness = TakeAverageBrightness(aloneStarPixels)
                         });
                 }
+
+            //load list of pixels to bitmap
+            var bitmap = new Bitmap(Origin.W, Origin.H);
+            foreach (var oneStar in Stars.ListOfStars)
+                foreach (var pixels in oneStar.StarPixels)
+                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
+
+            Stars.Bitmap = bitmap;
+            pictureBox2.Image = bitmap;
+
+
             FindMaxAndMinAverageBrightness();
             TextLog("Stars Done");
         }
@@ -280,11 +291,9 @@ namespace Pic_Analyzator
                 var starsOnLine = Stars.ListOfStars.FindAll(x => x.StarCenter.X == w);
                 foreach (var star in starsOnLine)
                 {
-                    int octave;
+                    int octave = 3; // stock octave
                     if (star.StarCenter.Y < octaveLengthInPixels)
-                        octave = 4;
-                    else
-                        octave = 3;
+                        octave++;
 
                     var buttonLength = octaveLengthInPixels / 7;
                     var octSumLength = Math.Abs(octave - 4) * octaveLengthInPixels;
@@ -453,13 +462,7 @@ namespace Pic_Analyzator
 
         private void findStarToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var bitmap = new Bitmap(Origin.W, Origin.H);
-            foreach (var oneStar in Stars.ListOfStars)
-                foreach (var pixels in oneStar.StarPixels)
-                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
-
-            Stars.Bitmap = bitmap;
-            pictureBox2.Image = bitmap;
+            pictureBox2.Image = Stars.Bitmap;
         }
 
         void OriginBitmapInit(string fileName)
