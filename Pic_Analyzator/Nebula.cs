@@ -7,5 +7,6 @@ namespace Pic_Analyzator
     {
         public static Bitmap Bitmap { get; set; }
         public static List<Pixel> Pixels { get; set; }
+        public static Dictionary<int, int> NebulaAverageBrightness { get; set; }
     }
 }

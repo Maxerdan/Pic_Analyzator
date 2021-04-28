@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -139,6 +140,23 @@ namespace Pic_Analyzator
             Nebula.Pixels = nebulaPixels;
             Nebula.Bitmap = bitmap;
             TextLog("Nebula Done");
+
+            Nebula.NebulaAverageBrightness = new Dictionary<int, int>();
+            var xs = Nebula.Pixels.GroupBy(x => x.Point.X).Select(x=>x.Key);
+            foreach(var x in xs)
+            {
+                var columnPixels = Nebula.Pixels.FindAll(el => el.Point.X == x);
+
+                double brightness = 0;
+                foreach(var pixel in columnPixels)
+                {
+                    brightness += pixel.Color.GetBrightness() * 1000;
+                }
+
+                Nebula.NebulaAverageBrightness.Add(x, (int)brightness / columnPixels.Count);
+            }
+            
+            TextLog("Done");
         }
 
         private void FindMin()
@@ -256,7 +274,6 @@ namespace Pic_Analyzator
             await Task.Run(() => PlayMusic());
         }
 
-        // old method to play music
         private void PlayMusic()
         {
             _stopPlay = false;
@@ -274,11 +291,6 @@ namespace Pic_Analyzator
             {
                 if (_stopPlay)
                 {
-                    string[] allButtons = { "A3", "B3", "C3", "D3", "E3", "F3", "G3", "A4", "B4", "C4", "D4", "E4", "F4", "G4", };
-                    foreach (var button in allButtons)
-                    {
-                        MidiPlayer.Play(new NoteOff(0, 1, button, 100));
-                    }
                     break;
                 }
 
@@ -386,70 +398,6 @@ namespace Pic_Analyzator
             return new Point(centerX, centerY);
         }
 
-        // old method to play music
-        private void PlayMusicOld()
-        {
-            _stopPlay = false;
-            var speedValue = 100;
-
-            MidiPlayer.OpenMidi();
-            MidiPlayer.Play(new ProgramChange(0, 1, GeneralMidiInstruments.SciFi));
-            var oct = (Origin.Max - Origin.Min) / 6; // 6 - max num of octaves
-
-            Bitmap redColumn;
-
-            for (var w = 0; w < Origin.W; w++)
-            {
-                if (_stopPlay)
-                {
-                    break;
-                }
-
-                redColumn = new Bitmap(Stars.Bitmap);
-                for (var i = 0; i < Origin.H; i++) redColumn.SetPixel(w, i, Color.IndianRed);
-                pictureBox2.Image = redColumn;
-                for (var h = 0; h < Origin.H; h++)
-                    if (GetColor(w, h).Name != "0")
-                    {
-                        var brightLevel = (int)(GetColor(w, h).GetBrightness() * 1000); // get bright level form pixel
-                        var octave = 3; // stock octave
-                        for (var i = 2; i < 6; i++)
-                            if (brightLevel > Origin.Min + oct * i && brightLevel <= Origin.Min + oct * (i + 1)
-                            ) // find octave num
-                            {
-                                octave = i + 1;
-                                break;
-                            }
-
-                        var oct7 = oct / 7; // find button num in octave
-                        var t = Origin.Min + oct * (octave - 1);
-                        if (brightLevel > t + oct7 && brightLevel <= t + oct7 * 2)
-                            PlaySound(100, $"C{octave}");
-                        else if (brightLevel > t + oct7 * 2 && brightLevel <= t + oct7 * 3)
-                            PlaySound(100, $"D{octave}");
-                        else if (brightLevel > t + oct7 * 3 && brightLevel <= t + oct7 * 4)
-                            PlaySound(100, $"E{octave}");
-                        else if (brightLevel > t + oct7 * 4 && brightLevel <= t + oct7 * 5)
-                            PlaySound(100, $"F{octave}");
-                        else if (brightLevel > t + oct7 * 5 && brightLevel <= t + oct7 * 6)
-                            PlaySound(100, $"G{octave}");
-                        else if (brightLevel > t + oct7 * 6 && brightLevel <= t + oct7 * 7)
-                            PlaySound(100, $"A{octave}");
-                        else if (brightLevel > t + oct7 * 7 && brightLevel <= t + oct7 * 8)
-                            PlaySound(100, $"B{octave}");
-                        Invoke(new Action(() => // delay between piano button push
-                        {
-                            Thread.Sleep(speedValue);
-                        }));
-                    }
-
-                Thread.Sleep(10); // delay between pixel column go
-            }
-
-            pictureBox2.Image = Stars.Bitmap;
-            MidiPlayer.CloseMidi();
-        }
-
         private void PlaySound(byte volume, string note)
         {
             MidiPlayer.Play(new NoteOn(0, 1, note, volume));
@@ -458,6 +406,11 @@ namespace Pic_Analyzator
         private void stopToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _stopPlay = true;
+            string[] allButtons = { "A3", "B3", "C3", "D3", "E3", "F3", "G3", "A4", "B4", "C4", "D4", "E4", "F4", "G4", };
+            foreach (var button in allButtons)
+            {
+                MidiPlayer.Play(new NoteOff(0, 1, button, 100));
+            }
         }
 
         private void findStarToolStripMenuItem_Click(object sender, EventArgs e)
