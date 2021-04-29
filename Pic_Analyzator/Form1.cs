@@ -14,53 +14,12 @@ namespace Pic_Analyzator
     public partial class Form1 : Form
     {
         private bool _stopPlay;
+        private Logger logger;
 
         public Form1()
         {
             InitializeComponent();
             soundType.DataSource = Enum.GetValues(typeof(GeneralMidiInstruments));
-        }
-
-        // method to get the picture and not to occupy it
-        public static Bitmap LoadBitmap(string fileName)
-        {
-            using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return new Bitmap(fs);
-            }
-        }
-
-
-        // UNSAFE METHOD
-        // add all pixels from _bitmap to array that includes ARGB values
-        public static unsafe byte[,,] BitmapToByteRgb(Bitmap bmp)
-        {
-            int width = bmp.Width,
-                height = bmp.Height;
-            var res = new byte[4, height, width];
-            var bd = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppArgb);
-            try
-            {
-                byte* curpos;
-                for (var h = 0; h < height; h++)
-                {
-                    curpos = (byte*)bd.Scan0 + h * bd.Stride;
-                    for (var w = 0; w < width; w++)
-                    {
-                        res[3, h, w] = *curpos++; // B
-                        res[2, h, w] = *curpos++; // G
-                        res[1, h, w] = *curpos++; // R
-                        res[0, h, w] = *curpos++; // A
-                    }
-                }
-            }
-            finally
-            {
-                bmp.UnlockBits(bd);
-            }
-
-            return res;
         }
 
         // menu OPEN button
@@ -73,7 +32,8 @@ namespace Pic_Analyzator
                     pictureBox2.Image = null;
                     pictureBox1.Image = new Bitmap(openFileDialog1.FileName);
                 });
-                OriginBitmapInit(openFileDialog1.FileName);
+                logger = new Logger(this);
+                Picture.OriginBitmapInit(openFileDialog1);
             }
             else // cancel choosing
             {
@@ -90,7 +50,7 @@ namespace Pic_Analyzator
         {
             var max = int.MinValue;
             Origin.Pixels = new List<Pixel>(Origin.W * Origin.H);
-            var arr = BitmapToByteRgb(Origin.Bitmap);
+            var arr = Picture.BitmapToByteRgb(Origin.Bitmap);
             for (var y = 0; y < Origin.H; y++)
                 for (var x = 0; x < Origin.W; x++)
                 {
@@ -101,7 +61,7 @@ namespace Pic_Analyzator
                 }
 
             Origin.Max = max;
-            TextLog("Find Max");
+            logger.Log("Find Max");
         }
 
         // find pixels which brigthness more then 3/4 of max brigthness
@@ -117,10 +77,11 @@ namespace Pic_Analyzator
                 }
 
             Stars.Bitmap = bitmap;
-            TextLog("NewBitmap 3/4 of max brightness");
+            logger.Log("NewBitmap 3/4 of max brightness");
 
-            FindStars();
-            FindMin();
+            Stars.FindStars();
+            pictureBox2.Image = Stars.Bitmap;
+            logger.Log("Stars Done");
         }
 
         private void TakeNebulaPixels()
@@ -139,133 +100,24 @@ namespace Pic_Analyzator
 
             Nebula.Pixels = nebulaPixels;
             Nebula.Bitmap = bitmap;
-            TextLog("Nebula Done");
+            logger.Log("Nebula Done");
 
             Nebula.NebulaAverageBrightness = new Dictionary<int, int>();
-            var xs = Nebula.Pixels.GroupBy(x => x.Point.X).Select(x=>x.Key);
-            foreach(var x in xs)
+            var xs = Nebula.Pixels.GroupBy(x => x.Point.X).Select(x => x.Key);
+            foreach (var x in xs)
             {
                 var columnPixels = Nebula.Pixels.FindAll(el => el.Point.X == x);
 
                 double brightness = 0;
-                foreach(var pixel in columnPixels)
+                foreach (var pixel in columnPixels)
                 {
                     brightness += pixel.Color.GetBrightness() * 1000;
                 }
 
                 Nebula.NebulaAverageBrightness.Add(x, (int)brightness / columnPixels.Count);
             }
-            
-            TextLog("Done");
-        }
 
-        private void FindMin()
-        {
-            var min = int.MaxValue;
-            foreach (var star in Stars.ListOfStars) // method to fill array and find min
-                foreach (var pixel in star.StarPixels)
-                {
-                    if ((int)(pixel.Color.GetBrightness() * 1000) < min)
-                        min = (int)(pixel.Color.GetBrightness() * 1000);
-                }
-
-            Origin.Min = min;
-        }
-
-        private void FindStars()
-        {
-            Stars.ListOfStars = new List<OneStar>();
-            var visitedNodes = new int[Origin.W, Origin.H];
-
-            for (var w = 0; w < Origin.W; w++)
-                for (var h = 0; h < Origin.H; h++)
-                {
-                    var aloneStarPixels = new List<Pixel>();
-                    var queue = new Queue<Pixel>();
-                    queue.Enqueue(new Pixel { Point = new Point(w, h), Color = GetColor(w, h) });
-                    visitedNodes[w, h] = 1; // заменить на структуру которая считает 1 как true для сравнения
-                    while (queue.Count != 0)
-                    {
-                        var node = queue.Dequeue();
-                        var x = node.Point.X;
-                        var y = node.Point.Y;
-
-                        if (GetColor(x, y).Name != "0")
-                        {
-                            aloneStarPixels.Add(new Pixel { Point = new Point(x, y), Color = GetColor(x, y) });
-                            if (y - 1 >= 0)
-                                if (visitedNodes[x, y - 1] == 0) //todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x, y - 1), Color = GetColor(x, y - 1) });
-                                    visitedNodes[x, y - 1] = 1; // todo
-                                }
-
-                            if (y + 1 < Origin.H)
-                                if (visitedNodes[x, y + 1] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x, y + 1), Color = GetColor(x, y + 1) });
-                                    visitedNodes[x, y + 1] = 1; // todo
-                                }
-
-                            if (x - 1 >= 0)
-                                if (visitedNodes[x - 1, y] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x - 1, y), Color = GetColor(x - 1, y) });
-                                    visitedNodes[x - 1, y] = 1; // todo
-                                }
-
-                            if (x + 1 < Origin.W)
-                                if (visitedNodes[x + 1, y] == 0) // todo
-                                {
-                                    queue.Enqueue(new Pixel { Point = new Point(x + 1, y), Color = GetColor(x + 1, y) });
-                                    visitedNodes[x + 1, y] = 1; // todo
-                                }
-                        }
-                    }
-
-                    if (aloneStarPixels.Count != 0 && aloneStarPixels.Count != 1)
-                        Stars.ListOfStars.Add(new OneStar()
-                        {
-                            StarPixels = aloneStarPixels,
-                            StarCenter = TakeStarCenter(aloneStarPixels),
-                            AverageBrightness = TakeAverageBrightness(aloneStarPixels)
-                        });
-                }
-
-            //load list of pixels to bitmap
-            var bitmap = new Bitmap(Origin.W, Origin.H);
-            foreach (var oneStar in Stars.ListOfStars)
-                foreach (var pixels in oneStar.StarPixels)
-                    bitmap.SetPixel(pixels.Point.X, pixels.Point.Y, pixels.Color);
-
-            Stars.Bitmap = bitmap;
-            pictureBox2.Image = bitmap;
-
-
-            FindMaxAndMinAverageBrightness();
-            TextLog("Stars Done");
-        }
-
-        private void FindMaxAndMinAverageBrightness()
-        {
-            var min = int.MaxValue;
-            var max = int.MinValue;
-            foreach (var star in Stars.ListOfStars)
-            {
-                if (star.AverageBrightness > max)
-                    max = star.AverageBrightness;
-                if (star.AverageBrightness < min)
-                    min = star.AverageBrightness;
-            }
-
-            Stars.MaxBrightness = max;
-            Stars.MinBrightness = min;
-        }
-
-        // method to log caption
-        private void TextLog(string text)
-        {
-            Invoke(new Action(() => { Text = text; }));
+            logger.Log("Done");
         }
 
         // menu PLAY SOUND button
@@ -285,7 +137,7 @@ namespace Pic_Analyzator
             {
                 MidiPlayer.Play(new ProgramChange(0, 1, (GeneralMidiInstruments)soundType.SelectedItem));
             }));
-            Bitmap redColumn;
+            var cursor = new Cursor();
 
             for (var w = 0; w < Origin.W; w++)
             {
@@ -294,10 +146,8 @@ namespace Pic_Analyzator
                     break;
                 }
 
-                redColumn = new Bitmap(Stars.Bitmap);
-                for (var i = 0; i < Origin.H; i++)
-                    redColumn.SetPixel(w, i, Color.IndianRed);
-                pictureBox2.Image = redColumn;
+                cursor.DrawCursor(w);
+                pictureBox2.Image = cursor.cursorLine;
 
                 var octaveLengthInPixels = Origin.H / 2; // 2 - octaves number
                 var starsOnLine = Stars.ListOfStars.FindAll(x => x.StarCenter.X == w);
@@ -307,6 +157,7 @@ namespace Pic_Analyzator
                     if (star.StarCenter.Y < octaveLengthInPixels)
                         octave++;
 
+                    // tone
                     var buttonLength = octaveLengthInPixels / 7;
                     var octSumLength = Math.Abs(octave - 4) * octaveLengthInPixels;
                     var button = "";
@@ -330,29 +181,28 @@ namespace Pic_Analyzator
                         MessageBox.Show($"{star.StarCenter.Y} {octSumLength} {octSumLength + buttonLength * 7}");
                     }
 
+                    // volume
                     var volume = 0;
                     var intervalNumber = 20;
-                    var intervalMin = 60;
+                    var intervalMin = 40;
                     var intervalMax = 120;
                     var intervalLength = (intervalMax - intervalMin) / intervalNumber;
                     double brightnessIntervalLength = (Stars.MaxBrightness - Stars.MinBrightness) / (double)intervalNumber;
                     for (var i = 0; i < intervalNumber; i++)
                     {
-                        if (star.AverageBrightness >= Stars.MinBrightness + brightnessIntervalLength * i && star.AverageBrightness <= Stars.MinBrightness + brightnessIntervalLength * (i + 1))
+                        if (star.AverageBrightness >= Stars.MinBrightness + brightnessIntervalLength * i &&
+                            star.AverageBrightness <= Stars.MinBrightness + brightnessIntervalLength * (i + 1))
                             volume = intervalMin + intervalLength * i;
                         if (star.AverageBrightness == Stars.MaxBrightness)
                             volume = intervalMax;
                     }
 
-
-
                     PlaySound((byte)volume, button);
-                    Invoke(new Action(() => // delay between piano button push
-                    {
-                        Thread.Sleep(speedValue);
-                    }));
+                    //Invoke(new Action(() => // delay between piano button push
+                    //{
+                    //    Thread.Sleep(speedValue);
+                    //}));
                 }
-
 
                 Thread.Sleep(int.Parse(columnSpeed.Text)); // delay between pixel column go
             }
@@ -360,47 +210,10 @@ namespace Pic_Analyzator
             pictureBox2.Image = Stars.Bitmap;
         }
 
-        private Point TakeStarCenter(List<Pixel> starPixels)
-        {
-            var maxX = int.MinValue;
-            var minX = int.MaxValue;
-            var maxY = int.MinValue;
-            var minY = int.MaxValue;
-            int centerX;
-            int centerY;
-
-            foreach (var pixel in starPixels)
-            {
-                if (pixel.Point.X > maxX)
-                    maxX = pixel.Point.X;
-                if (pixel.Point.X < minX)
-                    minX = pixel.Point.X;
-                if (pixel.Point.Y > maxY)
-                    maxY = pixel.Point.Y;
-                if (pixel.Point.Y < minY)
-                    minY = pixel.Point.Y;
-            }
-
-            if (maxX == minX)
-                centerX = maxX;
-            else
-            {
-                centerX = ((maxX - minX) / 2) + minX;
-            }
-
-            if (maxY == minY)
-                centerY = maxY;
-            else
-            {
-                centerY = ((maxY - minY) / 2) + minY;
-            }
-
-            return new Point(centerX, centerY);
-        }
-
         private void PlaySound(byte volume, string note)
         {
-            MidiPlayer.Play(new NoteOn(0, 1, note, volume));
+            if (!string.IsNullOrEmpty(note))
+                MidiPlayer.Play(new NoteOn(0, 1, note, volume));
         }
 
         private void stopToolStripMenuItem_Click(object sender, EventArgs e)
@@ -418,19 +231,6 @@ namespace Pic_Analyzator
             pictureBox2.Image = Stars.Bitmap;
         }
 
-        void OriginBitmapInit(string fileName)
-        {
-            var bitmap = LoadBitmap(openFileDialog1.FileName);
-            Origin.Bitmap = bitmap;
-            Origin.H = bitmap.Height;
-            Origin.W = bitmap.Width;
-        }
-
-        private Color GetColor(int x, int y)
-        {
-            return Stars.Bitmap.GetPixel(x, y);
-        }
-
         private void findNebulaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             pictureBox2.Image = Nebula.Bitmap;
@@ -444,18 +244,7 @@ namespace Pic_Analyzator
             {
                 bitmap.SetPixel(star.StarCenter.X, star.StarCenter.Y, Color.IndianRed);
             }
-            pictureBox1.Image = bitmap;
-        }
-
-        private int TakeAverageBrightness(List<Pixel> starPixels)
-        {
-            var brightnessSum = 0;
-            foreach (var pixel in starPixels)
-            {
-                brightnessSum += (int)(pixel.Color.GetBrightness() * 1000);
-            }
-
-            return brightnessSum / starPixels.Count;
+            pictureBox2.Image = bitmap;
         }
     }
 }
