@@ -59,6 +59,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Logger.cs" />
+    <Compile Include="Music.cs" />
     <Compile Include="Nebula.cs" />
     <Compile Include="Origin.cs" />
     <Compile Include="Picture.cs" />
