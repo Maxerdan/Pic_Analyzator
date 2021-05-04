@@ -14,6 +14,7 @@ namespace Pic_Analyzator
 
         public Cursor()
         {
+
             waveLength = 8;
             if (Origin.W > 500)
                 waveLength += 8;

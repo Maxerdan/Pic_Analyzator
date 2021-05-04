@@ -15,15 +15,22 @@ namespace Pic_Analyzator
 
         public Logger(Form form)
         {
-            LogCount = 1;
+            LogCount = 0;
             this.form = form;
         }
 
         // method to log caption
         public void Log(string text)
         {
-            form.Invoke(new Action(() => { form.Text = $"({LogCount}/{LogsMax}) " + text; }));
+            if (LogCount == 0)
+                StartMeasures();
+
             LogCount++;
+            form.Invoke(new Action(() => { form.Text = $"({LogCount}/{LogsMax}) " + text; }));
+            Measure();
+
+            if (LogCount == LogsMax)
+                ShowMeasures();
         }
 
         public void StartMeasures()

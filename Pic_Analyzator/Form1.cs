@@ -117,6 +117,7 @@ namespace Pic_Analyzator
                 Nebula.NebulaAverageBrightness.Add(x, (int)brightness / columnPixels.Count);
             }
 
+            pictureBox2.Image = Nebula.Bitmap;
             logger.Log("Done");
         }
 
@@ -133,6 +134,7 @@ namespace Pic_Analyzator
             foreach (var button in allButtons)
             {
                 MidiPlayer.Play(new NoteOff(0, 1, button, 100));
+                MidiPlayer.Play(new NoteOff(0, 2, button, 100));
             }
         }
 

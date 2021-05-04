@@ -21,21 +21,24 @@ namespace Pic_Analyzator
             form.Invoke(new Action(() =>
             {
                 MidiPlayer.Play(new ProgramChange(0, 1, (GeneralMidiInstruments)form.soundType.SelectedItem));
+                MidiPlayer.Play(new ProgramChange(0, 2, GeneralMidiInstruments.Goblin));
             }));
+            var nebulaMinBrightness = Nebula.NebulaAverageBrightness.Min(p => p.Value);
+            var nebulaMaxBrightness = Nebula.NebulaAverageBrightness.Max(p => p.Value);
             var cursor = new Cursor();
 
-            for (var w = 0; w < Origin.W; w++)
+            for (var x = 0; x < Origin.W; x++)
             {
                 if (form._stopPlay)
                 {
                     break;
                 }
 
-                cursor.DrawCursor(w);
+                cursor.DrawCursor(x);
                 form.pictureBox2.Image = cursor.cursorLine;
 
                 var octaveLengthInPixels = Origin.H / 2; // 2 - octaves number
-                var starsOnLine = Stars.ListOfStars.FindAll(x => x.StarCenter.X == w);
+                var starsOnLine = Stars.ListOfStars.FindAll(p => p.StarCenter.X == x);
                 foreach (var star in starsOnLine)
                 {
                     int octave = 3; // stock octave
@@ -63,7 +66,7 @@ namespace Pic_Analyzator
 
                     if (button == "")
                     {
-                        MessageBox.Show($"{star.StarCenter.Y} {octSumLength} {octSumLength + buttonLength * 7}");
+                        MessageBox.Show($"Y-starCenter: {star.StarCenter.Y}\nOctaveLength: {octSumLength}\nMaxLegth: {octSumLength + buttonLength * 7}", "Star can't be interpolated");
                     }
 
                     // volume
@@ -82,8 +85,38 @@ namespace Pic_Analyzator
                             volume = intervalMax;
                     }
 
-                    PlaySound((byte)volume, button);
-                    //Invoke(new Action(() => // delay between piano button push
+                    var nebulaNote = "";
+                    byte nebulaVolume = 60;
+                    int nebulaOctaveNum = 3;
+                    if (Nebula.NebulaAverageBrightness.Any(p => p.Key == x))
+                    {
+                        var brightness = Nebula.NebulaAverageBrightness[x];
+                        var nebulaBrightInterval = (nebulaMaxBrightness - nebulaMinBrightness) / 7.0;
+
+                        if (brightness >= nebulaMinBrightness && brightness <= nebulaMinBrightness + nebulaBrightInterval)
+                            nebulaNote = $"C{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval && brightness <= nebulaMinBrightness + nebulaBrightInterval * 2)
+                            nebulaNote = $"D{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval * 2 && brightness <= nebulaMinBrightness + nebulaBrightInterval * 3)
+                            nebulaNote = $"E{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval * 3 && brightness <= nebulaMinBrightness + nebulaBrightInterval * 4)
+                            nebulaNote = $"F{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval * 4 && brightness <= nebulaMinBrightness + nebulaBrightInterval * 5)
+                            nebulaNote = $"B{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval * 5 && brightness <= nebulaMinBrightness + nebulaBrightInterval * 6)
+                            nebulaNote = $"A{nebulaOctaveNum}";
+                        else if (brightness >= nebulaMinBrightness + nebulaBrightInterval * 6 && brightness <= nebulaMinBrightness + nebulaBrightInterval * 7)
+                            nebulaNote = $"G{nebulaOctaveNum}";
+                        else
+                        {
+                            MessageBox.Show($"NebulaBrightness: {brightness}\nNebulaBrightInterval: {nebulaBrightInterval}\nMaxLegth: {nebulaMinBrightness + nebulaBrightInterval * 7}", "Nebula can't be interpolated");
+                        }
+                    }
+
+
+                    PlaySound((byte)volume, button, 1);
+                    PlaySound(nebulaVolume, nebulaNote, 2);
+                    //form.Invoke(new Action(() => // delay between piano button push
                     //{
                     //    Thread.Sleep(speedValue);
                     //}));
@@ -95,10 +128,10 @@ namespace Pic_Analyzator
             form.pictureBox2.Image = Stars.Bitmap;
         }
 
-        private static void PlaySound(byte volume, string note)
+        private static void PlaySound(byte volume, string note, byte channel)
         {
             if (!string.IsNullOrEmpty(note))
-                MidiPlayer.Play(new NoteOn(0, 1, note, volume));
+                MidiPlayer.Play(new NoteOn(0, channel, note, volume));
         }
     }
 }
