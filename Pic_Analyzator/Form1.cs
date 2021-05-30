@@ -100,24 +100,22 @@ namespace Pic_Analyzator
 
             Nebula.Pixels = nebulaPixels;
             Nebula.Bitmap = bitmap;
+            pictureBox2.Image = Nebula.Bitmap;
             logger.Log("Nebula Done");
 
             Nebula.NebulaAverageBrightness = new Dictionary<int, int>();
-            var xs = Nebula.Pixels.GroupBy(x => x.Point.X).Select(x => x.Key);
+            var xs = Nebula.Pixels.GroupBy(x => x.Point.X).ToList();
             foreach (var x in xs)
             {
-                var columnPixels = Nebula.Pixels.FindAll(el => el.Point.X == x);
-
                 double brightness = 0;
-                foreach (var pixel in columnPixels)
+                foreach (var pixel in x)
                 {
                     brightness += pixel.Color.GetBrightness() * 1000;
                 }
 
-                Nebula.NebulaAverageBrightness.Add(x, (int)brightness / columnPixels.Count);
+                Nebula.NebulaAverageBrightness.Add(x.Key, (int)brightness / x.Count());
             }
-
-            pictureBox2.Image = Nebula.Bitmap;
+                        
             logger.Log("Done");
         }
 

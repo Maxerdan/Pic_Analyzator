@@ -67,7 +67,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(1228, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1228, 30);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -77,7 +77,7 @@
             this.openToolStripMenuItem,
             this.playSoundToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 26);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // openToolStripMenuItem
@@ -97,28 +97,28 @@
             // stopToolStripMenuItem
             // 
             this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
-            this.stopToolStripMenuItem.Size = new System.Drawing.Size(54, 24);
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(54, 26);
             this.stopToolStripMenuItem.Text = "Stop";
             this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
             // 
             // findStarToolStripMenuItem
             // 
             this.findStarToolStripMenuItem.Name = "findStarToolStripMenuItem";
-            this.findStarToolStripMenuItem.Size = new System.Drawing.Size(77, 24);
+            this.findStarToolStripMenuItem.Size = new System.Drawing.Size(77, 26);
             this.findStarToolStripMenuItem.Text = "FindStar";
             this.findStarToolStripMenuItem.Click += new System.EventHandler(this.findStarToolStripMenuItem_Click);
             // 
             // findNebulaToolStripMenuItem
             // 
             this.findNebulaToolStripMenuItem.Name = "findNebulaToolStripMenuItem";
-            this.findNebulaToolStripMenuItem.Size = new System.Drawing.Size(99, 24);
+            this.findNebulaToolStripMenuItem.Size = new System.Drawing.Size(99, 26);
             this.findNebulaToolStripMenuItem.Text = "FindNebula";
             this.findNebulaToolStripMenuItem.Click += new System.EventHandler(this.findNebulaToolStripMenuItem_Click);
             // 
             // showOriginToolStripMenuItem
             // 
             this.showOriginToolStripMenuItem.Name = "showOriginToolStripMenuItem";
-            this.showOriginToolStripMenuItem.Size = new System.Drawing.Size(100, 24);
+            this.showOriginToolStripMenuItem.Size = new System.Drawing.Size(100, 26);
             this.showOriginToolStripMenuItem.Text = "ShowOrigin";
             this.showOriginToolStripMenuItem.Click += new System.EventHandler(this.showOriginToolStripMenuItem_Click);
             // 
@@ -128,7 +128,7 @@
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(609, 571);
+            this.pictureBox1.Size = new System.Drawing.Size(609, 569);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
@@ -139,7 +139,7 @@
             this.pictureBox2.Location = new System.Drawing.Point(0, 0);
             this.pictureBox2.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(607, 571);
+            this.pictureBox2.Size = new System.Drawing.Size(607, 569);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox2.TabIndex = 2;
             this.pictureBox2.TabStop = false;
@@ -149,7 +149,7 @@
             this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.IsSplitterFixed = true;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 28);
+            this.splitContainer1.Location = new System.Drawing.Point(0, 30);
             this.splitContainer1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.splitContainer1.Name = "splitContainer1";
             // 
@@ -160,7 +160,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.pictureBox2);
-            this.splitContainer1.Size = new System.Drawing.Size(1228, 575);
+            this.splitContainer1.Size = new System.Drawing.Size(1228, 573);
             this.splitContainer1.SplitterDistance = 613;
             this.splitContainer1.TabIndex = 3;
             // 
