@@ -9,7 +9,6 @@ namespace Pic_Analyzator
         public static int H { get; set; } // height [y]
         public static int W { get; set; } // width [x]
         public static int Max { get; set; } // max brightness of all pixels
-        public static int Min { get; set; } // min brightness level    
         public static List<Pixel> Pixels { get; set; } // pixels array
     }
 }
